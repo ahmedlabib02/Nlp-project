@@ -35,7 +35,7 @@ In our project, we decided to pursue a classification task focused on categorizi
   df['raw_length'] = df['transcript'].apply(len)
   print(df['raw_length'].describe())
   ```
-
+  ![Bar Chart](raw.png)
 
 ### 2.3 Metadata Analysis
 - **Category Distribution:**  
@@ -48,8 +48,8 @@ In our project, we decided to pursue a classification task focused on categorizi
   plt.ylabel("Count")
   plt.show()
   ```
-  ![Bar Chart](chart.png)
-  
+  ![Bar Chart](cat.png)
+
 - **Title and Channel Consistency:**  
   We reviewed the title and channel columns for formatting and completeness.
 
