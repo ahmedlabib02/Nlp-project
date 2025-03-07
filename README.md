@@ -83,8 +83,65 @@ Kefaya Ba2a with 21 transcripts
  Top 10 most common words in raw transcripts:
  [('في', 5726), ('انا', 3823), ('ما', 3330), ('اللي', 3253), ('ده', 2993), ('انت', 2853), ('من', 2737), ('ان', 2699), ('هو', 2628), ('يعني', 2494)]
 
-**Purpose of Raw EDA:**  
+- **Category-Specific Top Words:**
+To further understand the nuances of each category, we computed the most common words for each category using the following code:
+```python
+def top_words_for_category(cat, n=10):
+    subset = df[df['category'] == cat]
+    combined_text = " ".join(subset['transcript'])
+    words = combined_text.split()
+    word_counts = Counter(words)
+    return word_counts.most_common(n)
+
+categories = df['category'].unique()
+for cat in categories:
+    print(f"Category: {cat}")
+    top_words = top_words_for_category(cat, n=5)
+    for word, count in top_words:
+        print(f"  {word}: {count}")
+```
+The output was:
+Category: Education
+  في: 3018
+  انا: 2115
+  اللي: 1838
+  ان: 1789
+  من: 1780
+Category: People & Blogs
+  في: 2135
+  انت: 1332
+  انا: 1327
+  ما: 1285
+  هو: 1259
+Category: Comedy
+  في: 573
+  ما: 399
+  يا: 391
+  انا: 381
+  انت: 364
+
+- **Viewing categories of each channel**
+We also inspected the different categories found in each channel, using the following code:
+```python
+for channel, group in df.groupby('channel'):
+    unique_categories = group['category'].unique()
+    num_categories = len(unique_categories)
+    print(f"Channel: {channel}")
+    print(f"Number of categories: {num_categories}")
+    print(f"Categories: {unique_categories}\n")
+```
+The output was:
+Channel: B Hodoo2
+Number of categories: 1
+Categories: ['Education']
+
+Channel: Kefaya Ba2a
+Number of categories: 2
+Categories: ['People & Blogs' 'Comedy']
+
+- **Purpose of Raw EDA:**  
 This initial analysis helped us understand the dataset's structure, quality, and linguistic characteristics, which in turn guided our decisions for the preprocessing pipeline.
+
 
 ---
 
@@ -93,9 +150,7 @@ This initial analysis helped us understand the dataset's structure, quality, and
 Our preprocessing pipeline transforms the raw transcripts into a consistent, noise-reduced format for effective feature extraction.
 
 ### 3.1 Cleaning and Normalization
-- **Diacritic Removal:**  
-  We removed Arabic diacritics to standardize words that appear with or without vowel marks.
-  
+
 - **Normalization of Arabic Letters:**  
   We normalized variants of letters (e.g., converting "أ", "إ", "آ" to "ا") to reduce vocabulary variability.
   
