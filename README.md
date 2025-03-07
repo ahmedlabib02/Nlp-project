@@ -50,8 +50,17 @@ In our project, we decided to pursue a classification task focused on categorizi
   ```
   ![Bar Chart](cat.png)
 
-- **Title and Channel Consistency:**  
-  We reviewed the title and channel columns for formatting and completeness.
+- **Analyzing Transcript Distribution Across Channels:**  
+To understand the distribution of transcripts across channels, we executed the following code:
+
+```python
+print(df['channel'].unique())
+print(df['channel'].value_counts())
+```
+The output indicated that there are two channels in the dataset:
+B Hodoo2 with 26 transcripts
+Kefaya Ba2a with 21 transcripts
+![Transcript Distribution by Channel](channel_distribution.png)
 
 ### 2.4 Preliminary Text Analysis
 - **Raw Text Sampling:**  
