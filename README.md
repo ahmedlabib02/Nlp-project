@@ -71,23 +71,19 @@ Kefaya Ba2a with 21 transcripts
   ```
   
 - **Word Frequency:**  
-  A basic word frequency analysis on lightly cleaned text provided insight into the most common terms and helped us design a custom stopword list.
+  A basic word frequency analysis on the raw text provided insight into the most common terms and helped us design a custom stopword list.
   
   ```python
-  from collections import Counter
-  import re
-
-  def simple_clean(text):
-      text = text.lower()
-      text = re.sub(r'[^\w\s]', '', text)
-      return text
-
-  all_text = " ".join(df['transcript'].apply(simple_clean))
+  all_text = " ".join(df['transcript'])
   words = all_text.split()
-  print("Top 10 words in raw transcripts:", Counter(words).most_common(10))
+  word_freq = Counter(words)
+  print("Top 10 most common words in raw transcripts:")
+  print(word_freq.most_common(10))
   ```
+ Top 10 most common words in raw transcripts:
+ [('في', 5726), ('انا', 3823), ('ما', 3330), ('اللي', 3253), ('ده', 2993), ('انت', 2853), ('من', 2737), ('ان', 2699), ('هو', 2628), ('يعني', 2494)]
 
-*Purpose of Raw EDA:*  
+**Purpose of Raw EDA:**  
 This initial analysis helped us understand the dataset's structure, quality, and linguistic characteristics, which in turn guided our decisions for the preprocessing pipeline.
 
 ---
