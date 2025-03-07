@@ -172,54 +172,33 @@ Our preprocessing pipeline transforms the raw transcripts into a consistent, noi
   ```
 
 ### 3.3 Stopword Removal
-- **Custom Stopword List:**  
-  We started with NLTK’s Arabic stopword list and augmented it with additional Egyptian-specific terms (e.g., "ال", "ان", "عل") identified from our raw frequency analysis.
-  
-  ```python
-  import nltk
-  from nltk.corpus import stopwords
 
-  nltk.download('stopwords')
-  arabic_stopwords = set(stopwords.words('arabic'))
-  custom_stopwords = {"ال", "ان", "عل", "كد", "نا", "بتاع"}
-  arabic_stopwords.update(custom_stopwords)
-  
-  def remove_stopwords(tokens, stopwords_set):
-      return [token for token in tokens if token not in stopwords_set]
+Following tokenization, we focused on refining the textual content by removing stopwords. Our initial analysis revealed that common function words—especially those specific to Egyptian dialect—were still highly frequent. Initially, we used the Arabic stopword list from NLTK, which is based on Modern Standard Arabic. This list did a good job at first, as demonstrated by our table showing the reduction in total tokens when applied to four random documents:
 
-  df['tokens_no_stop'] = df['clean_farasa_tokens'].apply(lambda tokens: remove_stopwords(tokens, arabic_stopwords))
-  ```
+| Document | total_tokens | total_tokens_no_stop |
+|----------|--------------|----------------------|
+| 0        | 4192         | 3242                 |
+| 1        | 3652         | 2883                 |
+| 2        | 3532         | 2756                 |
+| 3        | 4657         | 3607                 |
+| 4        | 2308         | 1756                 |
+
+However, when we examined the TF-IDF results from our first iteration, we discovered that the output still contained Egyptian stopwords such as "اللي". To address this, we performed a statistical analysis by calculating the document frequency (DF) for words and selecting the highest 5% of occurrences, under the assumption that these were also uninformative stopwords. We further refined the list by manually adding some additional terms. The following table shows the progressive reduction:
+
+| Document | total_tokens | total_tokens_no_stop | total_tokens_no_stop_custom |
+|----------|--------------|----------------------|-----------------------------|
+| 0        | 4192         | 3242                 | 1315                        |
+| 1        | 3652         | 2883                 | 1292                        |
+| 2        | 3532         | 2756                 | 1191                        |
+| 3        | 4657         | 3607                 | 1555                        |
+| 4        | 2308         | 1756                 | 739                         |
+
+This additional reduction improved the TF-IDF output by highlighting more expressive words, as will be further discussed in subsequent sections.
+
 
 ### 3.4 Stemming and Lemmatization
-- **Stemming (ISRIStemmer):**  
-  We applied the ISRIStemmer to reduce tokens to their root forms, which helps reduce vocabulary size.
-  
-- **Lemmatization (CAMeL Analyzer):**  
-  We used the CAMeL Tools Analyzer (with the “calima-msa-r13” model for MSA) to lemmatize tokens. Although MSA-based, it serves as a fallback for our Egyptian dialect.
-  
-  ```python
-  from camel_tools.morphology.database import MorphologyDB
-  from camel_tools.morphology.analyzer import Analyzer
 
-  db = MorphologyDB.builtin_db('calima-msa-r13', flags='a')
-  analyzer = Analyzer(db)
-
-  def get_lemma(word):
-      analyses = analyzer.analyze(word)
-      if analyses:
-          return analyses[0].get('lemma', word)
-      return word
-
-  def lemmatize_tokens(tokens):
-      return [get_lemma(token) for token in tokens]
-
-  df['lemmatized_tokens'] = df['tokens_no_stop'].apply(lemmatize_tokens)
-  ```
-
-*Purpose of Preprocessing:*  
-These steps transform the raw text into a uniform and cleaned representation that retains semantic meaning while reducing noise and variability—essential for building effective ML models.
-
----
+For morphological processing, we evaluated two approaches: stemming and lemmatization. Stemming, while effective in reducing the overall vocabulary by trimming words to their roots, sometimes oversimplified the tokens, potentially stripping away critical contextual meaning. In contrast, lemmatization—despite being based primarily on Modern Standard Arabic—proved better at preserving semantic nuances, an important factor given the mixture of MSA and Egyptian dialect in our dataset. We decided to incorporate both methods into our pipeline to later assess which provided a more robust representation for our classification tasks.
 
 ## 4. Exploratory Data Analysis (EDA) – Post-Preprocessing
 
