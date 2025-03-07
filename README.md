@@ -4,7 +4,11 @@
 ## 1. Introduction
 
 **Objective:**  
-This milestone focuses on exploring, cleaning, and preprocessing the dataset to prepare it for downstream NLP tasks such as text classification and topic modeling. Our dataset comprises 48 YouTube transcripts written in Arabic, featuring both Modern Standard Arabic (MSA) and Egyptian dialect elements. This report details our exploratory data analysis (EDA) and preprocessing pipeline, and discusses the insights gained and limitations encountered.
+This milestone focuses on exploring, cleaning, and preprocessing the dataset to prepare it for downstream NLP tasks such as text classification and topic modeling. Our dataset comprises 48 YouTube transcripts written in Arabic, featuring both Modern Standard Arabic (MSA) and Egyptian dialect elements. This report details our exploratory data analysis (EDA) and preprocessing pipeline, and discusses the insights gained and limitations encountered. 
+
+**Our Approach and Rationale:**  
+In our project, we decided to pursue a classification task focused on categorizing the transcripts. We selected this task because it allows us to leverage both metadata and textual content in a complementary way. Specifically, we use the channel information—which often provides context about the source and style of the content—as well as the most common words extracted from the transcripts. This combination helps capture not only the inherent topics within the text but also the contextual signals associated with specific channels. 
+
 
 **Dataset Overview:**  
 - **Number of Transcripts:** 48  
@@ -17,7 +21,7 @@ This milestone focuses on exploring, cleaning, and preprocessing the dataset to 
 
 ### 2.1 Data Structure and Quality
 - **Data Overview:**  
-  We used `df.info()` to confirm that our DataFrame contains 48 rows and 6 columns (title, channel, category, transcript, raw_length, diacritic_count).  
+  We used `df.info()` to confirm that our DataFrame contains 48 rows and 4 columns (title, channel, category, transcript).  
 - **Missing Values:**  
   One transcript is missing a category, which will be handled in later stages.  
 - **Duplicates:**  
@@ -32,8 +36,6 @@ This milestone focuses on exploring, cleaning, and preprocessing the dataset to 
   print(df['raw_length'].describe())
   ```
 
-- **Diacritic Count:**  
-  We calculated a diacritic count for each transcript to assess consistency in diacritization. This helped us decide on the normalization strategy.
 
 ### 2.3 Metadata Analysis
 - **Category Distribution:**  
@@ -46,6 +48,7 @@ This milestone focuses on exploring, cleaning, and preprocessing the dataset to 
   plt.ylabel("Count")
   plt.show()
   ```
+  ![Bar Chart](chart.png)
   
 - **Title and Channel Consistency:**  
   We reviewed the title and channel columns for formatting and completeness.
