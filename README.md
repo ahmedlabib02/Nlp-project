@@ -4,15 +4,15 @@
 ## 1. Introduction
 
 **Objective:**  
-This milestone focuses on exploring, cleaning, and preprocessing the dataset to prepare it for downstream NLP tasks such as text classification and topic modeling. Our dataset comprises 48 YouTube transcripts written in Arabic, featuring both Modern Standard Arabic (MSA) and Egyptian dialect elements. This report details our exploratory data analysis (EDA) and preprocessing pipeline, and discusses the insights gained and limitations encountered. 
+This milestone focuses on exploring, cleaning, and preprocessing the dataset to prepare it for downstream NLP tasks such as text classification and topic modeling. Our dataset comprises 73 YouTube transcripts written in Arabic, featuring both Modern Standard Arabic (MSA) and Egyptian dialect elements. This report details our exploratory data analysis (EDA) and preprocessing pipeline, and discusses the insights gained and limitations encountered. 
 
 **Our Approach and Rationale:**  
 In our project, we decided to pursue a classification task focused on categorizing the transcripts. We selected this task because it allows us to leverage both metadata and textual content in a complementary way. Specifically, we use the channel information—which often provides context about the source and style of the content—as well as the most common words extracted from the transcripts. This combination helps capture not only the inherent topics within the text but also the contextual signals associated with specific channels. 
 
 
 **Dataset Overview:**  
-- **Number of Transcripts:** 48  
-- **Metadata:** Each transcript comes with a title, channel, category (with one transcript missing a category), and additional metrics (e.g., raw character length, diacritic count).  
+- **Number of Transcripts:** 73  
+- **Metadata:** Each transcript comes with a title, channel, and category (with one transcript missing a category).  
 - **Language Characteristics:** The text contains a mix of MSA and Egyptian dialect, with varying transcript lengths and diacritization levels.
 
 ---
@@ -21,7 +21,7 @@ In our project, we decided to pursue a classification task focused on categorizi
 
 ### 2.1 Data Structure and Quality
 - **Data Overview:**  
-  We used `df.info()` to confirm that our DataFrame contains 48 rows and 4 columns (title, channel, category, transcript).  
+  We used `df.info()` to confirm that our DataFrame contains 73 rows and 4 columns (title, channel, category, transcript).  
 - **Missing Values:**  
   One transcript is missing a category, which will be handled in later stages.  
 - **Duplicates:**  
@@ -51,16 +51,11 @@ In our project, we decided to pursue a classification task focused on categorizi
   ![Bar Chart](cat.png)
 
 - **Analyzing Transcript Distribution Across Channels:**  
-To understand the distribution of transcripts across channels, we executed the following code:
+The distribution of transcripts across channels were as follows:
+- B Hodoo2                  26
+- al mokhbir al eqtisadi    25
+- Kefaya Ba2a               21
 
-```python
-print(df['channel'].unique())
-print(df['channel'].value_counts())
-```
-The output indicated that there are two channels in the dataset:
-B Hodoo2 with 26 transcripts
-Kefaya Ba2a with 21 transcripts
-![Transcript Distribution by Channel](channel_distribution.png)
 
 ### 2.4 Preliminary Text Analysis
 - **Raw Text Sampling:**  
@@ -72,47 +67,28 @@ Kefaya Ba2a with 21 transcripts
   
 - **Word Frequency:**  
   A basic word frequency analysis on the raw text provided insight into the most common terms and helped us design a custom stopword list.
-  
-  ```python
-  all_text = " ".join(df['transcript'])
-  words = all_text.split()
-  word_freq = Counter(words)
-  print("Top 10 most common words in raw transcripts:")
-  print(word_freq.most_common(10))
-  ```
- Top 10 most common words in raw transcripts:
+ 
+ The top 10 most common words in raw transcripts:
  [('في', 5726), ('انا', 3823), ('ما', 3330), ('اللي', 3253), ('ده', 2993), ('انت', 2853), ('من', 2737), ('ان', 2699), ('هو', 2628), ('يعني', 2494)]
 
 - **Category-Specific Top Words:**
-To further understand the nuances of each category, we computed the most common words for each category using the following code:
-```python
-def top_words_for_category(cat, n=10):
-    subset = df[df['category'] == cat]
-    combined_text = " ".join(subset['transcript'])
-    words = combined_text.split()
-    word_counts = Counter(words)
-    return word_counts.most_common(n)
+To further understand the nuances of each category, we computed the most common words for each category.
+The output was:  
 
-categories = df['category'].unique()
-for cat in categories:
-    print(f"Category: {cat}")
-    top_words = top_words_for_category(cat, n=5)
-    for word, count in top_words:
-        print(f"  {word}: {count}")
-```
-The output was:
-Category: Education
+ Category: Education  
   في: 3018
   انا: 2115
   اللي: 1838
   ان: 1789
-  من: 1780
-Category: People & Blogs
+  من: 1780  
+
+Category: People & Blogs  
   في: 2135
   انت: 1332
   انا: 1327
   ما: 1285
-  هو: 1259
+  هو: 1259  
+
 Category: Comedy
   في: 573
   ما: 399
@@ -120,24 +96,18 @@ Category: Comedy
   انا: 381
   انت: 364
 
-- **Viewing categories of each channel**
-We also inspected the different categories found in each channel, using the following code:
-```python
-for channel, group in df.groupby('channel'):
-    unique_categories = group['category'].unique()
-    num_categories = len(unique_categories)
-    print(f"Channel: {channel}")
-    print(f"Number of categories: {num_categories}")
-    print(f"Categories: {unique_categories}\n")
-```
+- **Viewing categories of each channel**  
+We also inspected the different categories found in each channel  
 The output was:
-Channel: B Hodoo2
-Number of categories: 1
-Categories: ['Education']
-
-Channel: Kefaya Ba2a
-Number of categories: 2
-Categories: ['People & Blogs' 'Comedy']
+Channel: B Hodoo2  
+Number of categories: 1  
+Categories: ['Education']  
+Channel: Kefaya Ba2a  
+Number of categories: 2  
+Categories: ['People & Blogs' 'Comedy']  
+Channel: al mokhbir al eqtisadi  
+Number of categories: 1  
+Categories: ['Entertainment ']
 
 - **Purpose of Raw EDA:**  
 This initial analysis helped us understand the dataset's structure, quality, and linguistic characteristics, which in turn guided our decisions for the preprocessing pipeline.
@@ -164,12 +134,7 @@ Our preprocessing pipeline transforms the raw transcripts into a consistent, noi
 - **Post-Processing:**  
   After tokenization, we removed segmentation markers (e.g., plus signs) to yield cleaner tokens.
   
-  ```python
-  def remove_plus_signs(tokens):
-      return [token.replace('+', '') for token in tokens]
 
-  df['clean_farasa_tokens'] = df['farasa_tokens'].apply(remove_plus_signs)
-  ```
 
 ### 3.3 Stopword Removal
 
