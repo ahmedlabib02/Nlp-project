@@ -4,7 +4,11 @@
 ## 1. Introduction
 
 **Objective:**  
-This milestone focuses on exploring, cleaning, and preprocessing the dataset to prepare it for downstream NLP tasks such as text classification and topic modeling. Our dataset comprises 48 YouTube transcripts written in Arabic, featuring both Modern Standard Arabic (MSA) and Egyptian dialect elements. This report details our exploratory data analysis (EDA) and preprocessing pipeline, and discusses the insights gained and limitations encountered.
+This milestone focuses on exploring, cleaning, and preprocessing the dataset to prepare it for downstream NLP tasks such as text classification and topic modeling. Our dataset comprises 48 YouTube transcripts written in Arabic, featuring both Modern Standard Arabic (MSA) and Egyptian dialect elements. This report details our exploratory data analysis (EDA) and preprocessing pipeline, and discusses the insights gained and limitations encountered. 
+
+**Our Approach and Rationale:**  
+In our project, we decided to pursue a classification task focused on categorizing the transcripts. We selected this task because it allows us to leverage both metadata and textual content in a complementary way. Specifically, we use the channel information—which often provides context about the source and style of the content—as well as the most common words extracted from the transcripts. This combination helps capture not only the inherent topics within the text but also the contextual signals associated with specific channels. 
+
 
 **Dataset Overview:**  
 - **Number of Transcripts:** 48  
@@ -17,7 +21,7 @@ This milestone focuses on exploring, cleaning, and preprocessing the dataset to 
 
 ### 2.1 Data Structure and Quality
 - **Data Overview:**  
-  We used `df.info()` to confirm that our DataFrame contains 48 rows and 6 columns (title, channel, category, transcript, raw_length, diacritic_count).  
+  We used `df.info()` to confirm that our DataFrame contains 48 rows and 4 columns (title, channel, category, transcript).  
 - **Missing Values:**  
   One transcript is missing a category, which will be handled in later stages.  
 - **Duplicates:**  
@@ -31,9 +35,7 @@ This milestone focuses on exploring, cleaning, and preprocessing the dataset to 
   df['raw_length'] = df['transcript'].apply(len)
   print(df['raw_length'].describe())
   ```
-
-- **Diacritic Count:**  
-  We calculated a diacritic count for each transcript to assess consistency in diacritization. This helped us decide on the normalization strategy.
+  ![Bar Chart](raw.png)
 
 ### 2.3 Metadata Analysis
 - **Category Distribution:**  
@@ -46,9 +48,19 @@ This milestone focuses on exploring, cleaning, and preprocessing the dataset to 
   plt.ylabel("Count")
   plt.show()
   ```
-  
-- **Title and Channel Consistency:**  
-  We reviewed the title and channel columns for formatting and completeness.
+  ![Bar Chart](cat.png)
+
+- **Analyzing Transcript Distribution Across Channels:**  
+To understand the distribution of transcripts across channels, we executed the following code:
+
+```python
+print(df['channel'].unique())
+print(df['channel'].value_counts())
+```
+The output indicated that there are two channels in the dataset:
+B Hodoo2 with 26 transcripts
+Kefaya Ba2a with 21 transcripts
+![Transcript Distribution by Channel](channel_distribution.png)
 
 ### 2.4 Preliminary Text Analysis
 - **Raw Text Sampling:**  
@@ -59,24 +71,77 @@ This milestone focuses on exploring, cleaning, and preprocessing the dataset to 
   ```
   
 - **Word Frequency:**  
-  A basic word frequency analysis on lightly cleaned text provided insight into the most common terms and helped us design a custom stopword list.
+  A basic word frequency analysis on the raw text provided insight into the most common terms and helped us design a custom stopword list.
   
   ```python
-  from collections import Counter
-  import re
-
-  def simple_clean(text):
-      text = text.lower()
-      text = re.sub(r'[^\w\s]', '', text)
-      return text
-
-  all_text = " ".join(df['transcript'].apply(simple_clean))
+  all_text = " ".join(df['transcript'])
   words = all_text.split()
-  print("Top 10 words in raw transcripts:", Counter(words).most_common(10))
+  word_freq = Counter(words)
+  print("Top 10 most common words in raw transcripts:")
+  print(word_freq.most_common(10))
   ```
+ Top 10 most common words in raw transcripts:
+ [('في', 5726), ('انا', 3823), ('ما', 3330), ('اللي', 3253), ('ده', 2993), ('انت', 2853), ('من', 2737), ('ان', 2699), ('هو', 2628), ('يعني', 2494)]
 
-*Purpose of Raw EDA:*  
+- **Category-Specific Top Words:**
+To further understand the nuances of each category, we computed the most common words for each category using the following code:
+```python
+def top_words_for_category(cat, n=10):
+    subset = df[df['category'] == cat]
+    combined_text = " ".join(subset['transcript'])
+    words = combined_text.split()
+    word_counts = Counter(words)
+    return word_counts.most_common(n)
+
+categories = df['category'].unique()
+for cat in categories:
+    print(f"Category: {cat}")
+    top_words = top_words_for_category(cat, n=5)
+    for word, count in top_words:
+        print(f"  {word}: {count}")
+```
+The output was:
+Category: Education
+  في: 3018
+  انا: 2115
+  اللي: 1838
+  ان: 1789
+  من: 1780
+Category: People & Blogs
+  في: 2135
+  انت: 1332
+  انا: 1327
+  ما: 1285
+  هو: 1259
+Category: Comedy
+  في: 573
+  ما: 399
+  يا: 391
+  انا: 381
+  انت: 364
+
+- **Viewing categories of each channel**
+We also inspected the different categories found in each channel, using the following code:
+```python
+for channel, group in df.groupby('channel'):
+    unique_categories = group['category'].unique()
+    num_categories = len(unique_categories)
+    print(f"Channel: {channel}")
+    print(f"Number of categories: {num_categories}")
+    print(f"Categories: {unique_categories}\n")
+```
+The output was:
+Channel: B Hodoo2
+Number of categories: 1
+Categories: ['Education']
+
+Channel: Kefaya Ba2a
+Number of categories: 2
+Categories: ['People & Blogs' 'Comedy']
+
+- **Purpose of Raw EDA:**  
 This initial analysis helped us understand the dataset's structure, quality, and linguistic characteristics, which in turn guided our decisions for the preprocessing pipeline.
+
 
 ---
 
@@ -85,9 +150,7 @@ This initial analysis helped us understand the dataset's structure, quality, and
 Our preprocessing pipeline transforms the raw transcripts into a consistent, noise-reduced format for effective feature extraction.
 
 ### 3.1 Cleaning and Normalization
-- **Diacritic Removal:**  
-  We removed Arabic diacritics to standardize words that appear with or without vowel marks.
-  
+
 - **Normalization of Arabic Letters:**  
   We normalized variants of letters (e.g., converting "أ", "إ", "آ" to "ا") to reduce vocabulary variability.
   
@@ -109,169 +172,159 @@ Our preprocessing pipeline transforms the raw transcripts into a consistent, noi
   ```
 
 ### 3.3 Stopword Removal
-- **Custom Stopword List:**  
-  We started with NLTK’s Arabic stopword list and augmented it with additional Egyptian-specific terms (e.g., "ال", "ان", "عل") identified from our raw frequency analysis.
-  
-  ```python
-  import nltk
-  from nltk.corpus import stopwords
 
-  nltk.download('stopwords')
-  arabic_stopwords = set(stopwords.words('arabic'))
-  custom_stopwords = {"ال", "ان", "عل", "كد", "نا", "بتاع"}
-  arabic_stopwords.update(custom_stopwords)
-  
-  def remove_stopwords(tokens, stopwords_set):
-      return [token for token in tokens if token not in stopwords_set]
+Initially, we applied NLTK’s Arabic stopword list—which is based on Modern Standard Arabic—to our tokenized text. This initial removal reduced the average token count per document. For example, across our dataset, the mean total tokens per document were 3684, and after applying the initial stopword removal, the mean token count dropped to 2822 The results of this initial stage are summarized in the table below:
 
-  df['tokens_no_stop'] = df['clean_farasa_tokens'].apply(lambda tokens: remove_stopwords(tokens, arabic_stopwords))
-  ```
+| Mean total tokens | Mean tokens after initial stopword removal |
+|-------------------|----------------------------------------------|
+| 3684       | 2822                                  |
+
+However, our subsequent TF-IDF analysis revealed that Egyptian dialect stopwords (e.g., "اللي") were still present. To further refine the process, we performed a statistical analysis by calculating document frequency and selecting the top 5% most frequent words as additional stopwords, supplementing them with manually added terms. This further reduction brought the mean token count down to 1277 per document. The table below summarizes the progressive reduction across all stages:
+
+| Mean total tokens | Mean tokens after initial stopword removal | Mean tokens after additional stopword removal |
+|-------------------|----------------------------------------------|-------------------------------------------------|
+| 3684       | 2822                                 | 1277                                   |
+
+This two-stage approach to stopword removal allowed us to progressively filter out uninformative tokens, ultimately leading to a more expressive feature set for our downstream tasks.
+
+
 
 ### 3.4 Stemming and Lemmatization
-- **Stemming (ISRIStemmer):**  
-  We applied the ISRIStemmer to reduce tokens to their root forms, which helps reduce vocabulary size.
-  
-- **Lemmatization (CAMeL Analyzer):**  
-  We used the CAMeL Tools Analyzer (with the “calima-msa-r13” model for MSA) to lemmatize tokens. Although MSA-based, it serves as a fallback for our Egyptian dialect.
-  
-  ```python
-  from camel_tools.morphology.database import MorphologyDB
-  from camel_tools.morphology.analyzer import Analyzer
 
-  db = MorphologyDB.builtin_db('calima-msa-r13', flags='a')
-  analyzer = Analyzer(db)
+In this section, we compare two approaches for morphological normalization: stemming and lemmatization. Our objective was to reduce vocabulary size while preserving semantic content for improved downstream performance in a text classification task.
 
-  def get_lemma(word):
-      analyses = analyzer.analyze(word)
-      if analyses:
-          return analyses[0].get('lemma', word)
-      return word
+**Methodology and Manual Inspection:**  
+- **Stemming:** We applied the ISRIStemmer on the tokens (after additional stopword removal) to reduce them to their root forms. Manual inspection of a representative document shows that the stemming process aggressively reduces token forms, resulting in a more compact and normalized output.  
+- **Lemmatization:** Using the CAMeL Tools Analyzer, we lemmatized the same set of tokens. This method retained more of the original word forms, capturing finer semantic nuances, but at the cost of a larger vocabulary.
 
-  def lemmatize_tokens(tokens):
-      return [get_lemma(token) for token in tokens]
+**Manual Inspection**
+For example, for one document:  
+- The **original tokens** (after additional stopword removal) included words such as `['الانتاجيه', '500', 'قناه', 'وبحسبه', ...]`.  
+- The **stemmed tokens** were significantly abbreviated (e.g., `['ناج', '500', 'قنه', 'حسب', ...]`).  
+- The **lemmatized tokens** preserved more of the original form (e.g., `['الانتاجيه', '500', 'قناه', 'وبحسبه', ...]`).
 
-  df['lemmatized_tokens'] = df['tokens_no_stop'].apply(lemmatize_tokens)
-  ```
+**Vocabulary Size Comparison:**  
+When we computed the vocabulary for the tokens after additional stopword removal, we obtained **35,014** unique tokens.Some of the most frequent tokens in this set were:
+- ('الإنسان', 338)
+- ('وأنا', 310)
+- ('وأنت', 232)
+- ('فأنا', 187)
+- ('الآخر', 176)
+- ('لالله', 171)
+- ('أقول', 162)
+- ('أكبر', 158)
+- ('أعمل', 150)
 
-*Purpose of Preprocessing:*  
-These steps transform the raw text into a uniform and cleaned representation that retains semantic meaning while reducing noise and variability—essential for building effective ML models.
+After applying stemming, the vocabulary was significantly compressed to **10,109** unique tokens, whereas lemmatization did not affect the vocabulary size. This indicates that stemming offers a more compact representation.
+
+**Baseline Model Evaluation:**  
+We integrated both approaches into a baseline text classification pipeline using TF-IDF features and a logistic regression classifier. The evaluation metrics for both pipelines were nearly identical:
+- **Accuracy:** 86.67%
+- **Precision (weighted):** 88.83%
+- **Recall (weighted):** 86.67%
+- **F1-score (weighted):** 85.04%
+
+The confusion matrices and detailed classification reports were also similar between the two methods.
+
+**Conclusion:**  
+Given that both stemming and lemmatization achieve comparable predictive performance, the choice between them comes down to efficiency and feature space compactness. Stemming significantly reduces the vocabulary size, which:
+- Lowers computational complexity and speeds up training,
+- Minimizes the risk of overfitting (particularly important given our relatively small dataset), and
+- Streamlines the feature space without sacrificing classification accuracy.
+
+Based on these results, our pipeline will favor **stemming** as the preferred approach for morphological normalization.
+
+
+## 4. Post-Preprocessing Analysis
+
+After applying our stemming-based preprocessing pipeline, we generated a TF-IDF matrix from the processed text. Specifically, we converted the stemmed tokens into document strings and used a TF-IDF vectorizer with a maximum of 5000 features and an n-gram range of (1,2). The resulting matrix had a shape of **(72, 5000)**, corresponding to 72 documents with 5000 features each.
+
+### 4.1 TF-IDF Analysis per Document
+
+We then inspected the highest scoring words for individual documents to assess the quality of the TF-IDF features. For instance, in one document related to a video discussing the pain from love relationships, negative emotions, and the loss of motivation, the top TF-IDF scores were:
+- **سقط:** 0.1924  
+- **الم:** 0.1862  
+- **اجتماعيه:** 0.1602  
+- **دعم:** 0.1520  
+- **نكد:** 0.1510  
+
+These results indicate that the document’s emotional and relational content is being captured effectively.
+
+In another document which discusses aspects of career life, the highest scoring words were:
+- **هترضى:** 0.2264  
+- **وأن:** 0.1822  
+- **كارير:** 0.1806  
+- **شغل:** 0.1674  
+- **كورس:** 0.1550  
+
+Although one of the high-scoring terms is a residual stopword ("وأن"), the presence of words such as **كارير** and **شغل** shows that the TF-IDF features still capture relevant domain-specific information for career-related content.
+
+Overall, these findings suggest that our preprocessing pipeline is effective in extracting meaningful features from the text, despite minor issues (like a few stopwords persisting).
+
+
+### 4.2 TF-IDF Analysis per Category
+
+We further examined the TF-IDF matrix on a per-category basis by generating separate TF-IDF representations for each category. This allowed us to inspect the highest scoring words and assess whether the features captured are semantically aligned with the content of each category.
+
+**Observations:**
+
+- **Education:**  
+  The top scoring words include:
+  - **عمل:** 0.1056  
+  - **وأن:** 0.0922  
+  - **انس:** 0.0889  
+  - **علم:** 0.0604  
+  - **فكر:** 0.0548  
+
+  Notably, the term **علم** (knowledge) appears among the highest scoring words, which is fitting for educational content.
+
+- **People & Blogs:**  
+  The top terms are:
+  - **عمل:** 0.0806  
+  - **كلب:** 0.0561  
+  - **فطر:** 0.0551  
+  - **اكل:** 0.0517  
+  - **وأن:** 0.0507  
+
+  Here, the presence of **وأن**—a residual stopword—suggests that further refinement of the stopword list might be beneficial for this category.
+
+- **Comedy:**  
+  The highest scoring words include:
+  - **لعب:** 0.2207  
+  - **ريض:** 0.1605  
+  - **مسم:** 0.1152  
+  - **عمل:** 0.1085  
+  - **حلق:** 0.0953  
+
+  The term **عمل** appears again, indicating that it may be the stem for a variety of related words across categories.
+
+- **Entertainment:**  
+  The top scoring words are:
+  - **روس:** 0.1052  
+  - **امر:** 0.1022  
+  - **صنع:** 0.0461  
+  - **صين:** 0.0455  
+  - **نفط:** 0.0379  
+
+  These terms reflect the geopolitical and economic themes common in entertainment-related content.
+
+
+Overall, the per-category TF-IDF analysis indicates that while the features are largely reflective of the underlying topics, there is still room for improvement—particularly in further refining the stopword list to remove residual noise (e.g., **وأن**) and in handling common stems like **عمل**. These insights will guide future adjustments to our preprocessing pipeline.
+
+
+
+### 4.3 Visualizations
+
+
+
+
+
 
 ---
 
-## 4. Exploratory Data Analysis (EDA) – Post-Preprocessing
 
-After preprocessing, we conducted further analysis to evaluate the impact of our cleaning pipeline.
 
-### 4.1 Vocabulary Analysis
-- **Vocabulary Size:**  
-  We calculated the number of unique tokens after lemmatization.
-  
-  ```python
-  from collections import Counter
-  all_tokens = [token for tokens in df['lemmatized_tokens'] for token in tokens]
-  vocab = set(all_tokens)
-  print("Vocabulary size:", len(vocab))
-  ```
-
-- **Frequency Distribution:**  
-  We used a `Counter` to list the most common tokens.
-  
-  ```python
-  token_freq = Counter(all_tokens)
-  print("Top 10 most frequent tokens:", token_freq.most_common(10))
-  ```
-
-### 4.2 Document Length Distribution
-- **Token Count per Document:**  
-  We computed and visualized the number of tokens per document.
-  
-  ```python
-  df['token_count'] = df['lemmatized_tokens'].apply(len)
-  print(df['token_count'].describe())
-  
-  import matplotlib.pyplot as plt
-  plt.hist(df['token_count'], bins=20, color='skyblue')
-  plt.xlabel("Number of tokens per document")
-  plt.ylabel("Frequency")
-  plt.title("Document Length Distribution (Post-Preprocessing)")
-  plt.show()
-  ```
-
-### 4.3 Category-Specific Analysis
-- **Top Terms per Category:**  
-  We built TF-IDF representations for each category to extract the most significant words.
-  
-  ```python
-  from sklearn.feature_extraction.text import TfidfVectorizer
-  categories = df['category'].dropna().unique()
-  for cat in categories:
-      print(f"Category: {cat}")
-      subset = df[df['category'] == cat]
-      vectorizer_cat = TfidfVectorizer(max_features=5000, ngram_range=(1,2))
-      X_cat = vectorizer_cat.fit_transform(subset['processed_text'])
-      feature_names_cat = vectorizer_cat.get_feature_names_out()
-      avg_tfidf = X_cat.mean(axis=0).A1
-      top_indices = np.argsort(avg_tfidf)[::-1][:5]
-      top_terms = [(feature_names_cat[i], avg_tfidf[i]) for i in top_indices if avg_tfidf[i] > 0]
-      for term, score in top_terms:
-          print(f"  {term}: {score:.4f}")
-      print("------")
-  ```
-
-### 4.4 Visualizations
-- **Word Cloud:**  
-  A word cloud was generated using an Arabic-capable font (with reshaping for proper display).
-  
-  ```python
-  from wordcloud import WordCloud
-  import arabic_reshaper
-  from bidi.algorithm import get_display
-  
-  text_combined = " ".join(df['processed_text'])
-  reshaped_text = arabic_reshaper.reshape(text_combined)
-  bidi_text = get_display(reshaped_text)
-  
-  # Update the path below to point to an Arabic font on your system.
-  wordcloud = WordCloud(font_path='path/to/arabic_font.ttf',
-                        width=800, height=400, background_color='white'
-                       ).generate(bidi_text)
-  plt.figure(figsize=(10, 5))
-  plt.imshow(wordcloud, interpolation='bilinear')
-  plt.axis("off")
-  plt.title("Arabic Word Cloud")
-  plt.show()
-  ```
-
-- **N-gram Analysis:**  
-  We also examined frequent bigrams to capture common phrases.
-  
-  ```python
-  from nltk import ngrams
-  def get_ngrams(tokens, n=2):
-      return list(ngrams(tokens, n))
-  
-  df['bigrams'] = df['lemmatized_tokens'].apply(lambda tokens: get_ngrams(tokens, n=2))
-  all_bigrams = [bigram for bigrams in df['bigrams'] for bigram in bigrams]
-  bigram_freq = Counter(all_bigrams)
-  print("Top 10 most common bigrams:", bigram_freq.most_common(10))
-  ```
-
-*Purpose of Post-Preprocessing EDA:*  
-This stage validates the cleaning process by quantifying improvements (reduced vocabulary size, standardized tokens) and provides insights into the final feature space. It also highlights areas for further refinement (e.g., persistent stopwords).
-
----
-
-## 5. Analysis of Output and Limitations
-
-### Analysis of Output
-- **TF-IDF Insights:**  
-  The top TF-IDF terms reveal that some function words (e.g., “ال”) still appear, indicating that further stopword refinement may be necessary.
-- **Morphological Artifacts:**  
-  Aggressive stemming and lemmatization may lead to truncated or altered tokens. We compared both approaches to assess which retains more meaningful information.
-- **Category-Specific Patterns:**  
-  Analyzing top terms per category helped us understand which words are most informative for distinguishing topics. However, the presence of common, non-discriminative tokens suggests that the stopword list might need further tuning.
-
-### Limitations
+## 5. Limitations
 - **Dialect vs. MSA:**  
   The use of MSA-based tools for lemmatization may not fully capture the nuances of Egyptian dialect, which can affect the quality of the output.
 - **Stopword Removal:**  
