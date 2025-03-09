@@ -164,7 +164,13 @@ This two-stage approach to stopword removal allowed us to progressively filter o
 
 
 
-### 3.4 Stemming and Lemmatization
+
+### 3.4 Named Entity Recognition (NER)
+
+To preserve semantically critical information that might be lost during aggressive stemming, we implemented a Named Entity Recognition (NER) step in our preprocessing pipeline. This allows us to retain contextually significant entities like persons, locations, and organizations, which we will analyse further if they are crucial for downstream tasks classification.
+
+
+### 3.5 Stemming and Lemmatization
 
 In this section, we compare two approaches for morphological normalization: stemming and lemmatization. Our objective was to reduce vocabulary size while preserving semantic content for improved downstream performance in a text classification task.
 
@@ -210,7 +216,7 @@ Given that both stemming and lemmatization achieve comparable predictive perform
 Based on these results, our pipeline will favor **stemming** as the preferred approach for morphological normalization.
 
 
-### 3.5 Feature and Target Encoding
+### 3.6 Feature and Target Encoding
 
 To prepare our dataset for classification, we performed two key encoding steps: concatenating our input features and encoding our target labels.
 
@@ -466,31 +472,113 @@ The model achieved an accuracy of **95.45%** on the test set. The classification
 
 Our primary objective for this milestone was not to optimize model performance but to demonstrate that our preprocessed data is suitable for downstream classification tasks. The high overall accuracy indicates that the transformed features capture meaningful distinctions in the data, confirming the efficacy of our preprocessing pipeline.
 
+#### 4.6 Entity Token Value Analysis Per Category
+
+**Comedy**  
+- **Top Entities**: ميدو (41), هيثم (19), هيروز (7), سوبر (5), شيشه (5)  
+- **Issues**:  
+  - Most entities are informal nicknames (e.g., "ميدو") or fictional terms ("هيروز") with no real-world significance.  
+  - "سوبر" (super) and "شيشه" (hookah) are generic terms unrelated to comedic themes.  
+  - No alignment with humor-specific entities (e.g., jokes, satire).  
+
+**Education**  
+- **Top Entities**: بكر (24), نوح (14), الإسلام (11), صلى (8)  
+- **Issues**:  
+  - Religious/historical terms ("بكر," "نوح") are overly broad and fail to capture educational content (e.g., "math," "science").  
+  - "يوتيوب" (YouTube) is a platform, not an educational concept.  
+  - Entities lack specificity (e.g., "بن" means "son" and is contextually meaningless).  
+
+**Entertainment**  
+- **Top Entities**: أمريكا (34), روسيا (29), الاحتياطي (28), توشيبا (17)  
+- **Issues**:  
+  - Geopolitical terms ("أمريكا," "روسيا") dominate but are irrelevant to entertainment themes (e.g., movies, music).  
+  - Technical terms like "الاحتياطي" (reserve) and brands ("توشيبا") add noise without thematic relevance.  
+
+**People & Blogs**  
+- **Top Entities**: أحمد (40), كيك (25), بيتزا (10), تشيز (19)  
+- **Issues**:  
+  - Generic personal names ("أحمد") dominate, offering no contextual insight.  
+  - Food-related terms ("كيك," "بيتزا," "تشيز") suggest recipe content but conflict with the category’s broad scope.  
+  - No alignment with blog-specific themes (e.g., lifestyle, travel).  
+
+#### 4.7 Entity Type Analysis Per Category  
+
+**Comedy**  
+- **Dominant Types**: `B-MISC` (184), `B-PERS` (155), `I-PERS` (66)  
+- **Issues**:  
+  - High `B-MISC` (miscellaneous entities) suggests vague or non-thematic terms (e.g., slang, fictional references).  
+  - `B-PERS` includes informal nicknames (e.g., "ميدو") rather than meaningful figures.  
+  - Minimal `B-LOC`/`B-ORG` signals irrelevance to comedic themes.  
+
+**Education**  
+- **Dominant Types**: `B-PERS` (232), `B-MISC` (173)  
+- **Issues**:  
+  - `B-PERS` includes historical/religious figures (e.g., "نوح"), which are too broad for educational content.  
+  - `B-MISC` likely captures generic terms (e.g., "يوتيوب") instead of domain-specific concepts.  
+  - Negligible `B-LOC`/`B-ORG` fails to reflect academic institutions or topics.  
+
+**Entertainment**  
+- **Dominant Types**: `B-LOC` (1233), `B-ORG` (618), `B-PERS` (583)  
+- **Issues**:  
+  - Overwhelming `B-LOC` (geopolitical terms like "أمريكا") and `B-ORG` (organizations like "الاحتياطي") are too generic for entertainment themes.  
+  - High `B-PERS` includes public figures but lacks alignment with media or cultural content.  
+  - Dominance of these types likely reflects dataset bias (e.g., news-like content miscategorized as entertainment).  
+
+**People & Blogs**  
+- **Dominant Types**: `B-MISC` (652), `B-PERS` (358)  
+- **Issues**:  
+  - `B-MISC` dominates with ambiguous terms (e.g., "كيك," "بيتزا"), unrelated to blogging themes.  
+  - `B-PERS` includes common names ("أحمد") without contextual relevance.  
+  - Low `B-LOC`/`B-ORG` fails to capture travel or institutional narratives.
+
+
+
+
 
 ## Limitations
 
 - **Small Dataset Size:**  
-  Our dataset consists of only 73 documents, which is a very limited sample for generalizing to a broader population. This small size increases the risk of overfitting and may not capture the full variability of language use in the target domain.
+  Our dataset consists of only 73 documents, which is insufficient for robust generalization. This increases overfitting risks and limits the model's ability to capture linguistic diversity in real-world scenarios.
 
 - **Dialectal Variations in Egyptian Arabic:**  
-  The use of Egyptian dialect introduces challenges in preprocessing. Standard Arabic tools (such as those for stopword removal, stemming, and lemmatization) are primarily designed for Modern Standard Arabic (MSA) and often fall short when handling dialect-specific vocabulary and nuances. As a result, additional manual interventions (like using custom lists of dialect-specific stopwords) are required, and even then, tools like lemmatization may not significantly improve the feature quality.
+  Standard NLP tools (e.g., stemmers, lemmatizers) are optimized for Modern Standard Arabic (MSA) and struggle with Egyptian dialect-specific vocabulary, morphology, and clitics. Manual interventions (e.g., custom stopword lists) are error-prone and time-consuming.
 
 - **Class Imbalance:**  
-  The distribution of documents across categories is uneven. For example, the Comedy category contains only 4 documents, which can negatively affect the training and evaluation of classification models, leading to biased performance metrics and poor generalization for underrepresented classes.
+  Severe imbalance exists, particularly in the Comedy category (4 documents). This skews model training and evaluation, leading to inflated performance metrics for majority classes (e.g., Education, Entertainment) and poor generalization for underrepresented classes.
 
 - **Preprocessing Artifacts:**  
-  Some preprocessing steps, such as aggressive stemming, might over-simplify words and remove meaningful distinctions. Likewise, residual stopwords or morphological markers (e.g., from tokenization with Farasa) can introduce noise into the feature space, potentially impacting model performance.
+  Aggressive stemming (e.g., ISRIStemmer) strips words to overly simplified roots, erasing meaningful distinctions (e.g., "القاهرة" → "قاه"). Residual stopwords and tokenization artifacts (e.g., Farasa’s segmentation markers) introduce noise into feature representations.
 
 - **Annotation Quality and Consistency:**  
-  Since the document categories are derived from metadata, any inconsistencies or errors in the annotation process can propagate through to the model, affecting its reliability and interpretability.
+  Categories are derived from metadata (e.g., YouTube channel labels), which may misalign with actual content themes. For example, "Entertainment" could include geopolitical discussions, introducing label ambiguity.
 
 - **Limited Contextual Features:**  
-  The reliance on TF-IDF (with n-grams) may not capture deeper contextual relationships compared to more advanced methods like contextualized word embeddings. This could limit the model's ability to generalize to new or ambiguous texts.
+  TF-IDF with n-grams captures surface-level patterns but fails to model semantic relationships or context, unlike transformer-based embeddings (e.g., BERT). This limits performance on nuanced classification tasks.
 
-- **Potential Data Leakage:**  
-  With a small dataset, there is an increased risk of data leakage or high similarity between training and test sets, which can lead to overly optimistic performance estimates.
+- **Data Leakage Risk:**  
+  Small dataset size increases the likelihood of overlapping vocabulary or thematic overlap between training and test splits, artificially inflating model accuracy.
 
+- **Temporal and Cultural Bias:**  
+  Transcripts may reflect trends or events specific to a narrow timeframe or Egyptian cultural context, reducing applicability to other regions or time periods.
 
+- **ASR-Generated Noise:**  
+  Transcripts generated by automated speech recognition (ASR) tools likely contain transcription errors (e.g., misheard words, omitted punctuation), compounding preprocessing challenges.
+
+- **Evaluation Metric Limitations:**  
+  Reliance on accuracy and weighted F1-scores masks poor performance on minority classes (e.g., Comedy). Metrics like macro-F1 or per-class precision/recall are better suited but were not prioritized.
+
+- **Scalability and Computational Constraints:**  
+  Pipeline optimizations for small data (e.g., manual entity lists) may not scale efficiently to larger datasets. Limited access to computational resources also restricts experimentation with advanced models (e.g., transformers).
+
+- **Ethical and Reproducibility Gaps:**  
+  - **Bias Propagation:** Channel-specific biases (e.g., "B Hodoo2" focusing on Education) may propagate into model predictions.  
+  - **Reproducibility:** Subjective preprocessing steps (e.g., manual stopword curation) lack standardized documentation, hindering replication.  
+
+- **Domain Generalization:**  
+  The model is tailored to YouTube transcripts and may struggle with text from other platforms (e.g., tweets, news articles) due to differences in structure, formality, and vocabulary.
+
+- **Interpretability Trade-offs:**  
+  While logistic regression with TF-IDF offers interpretability, future use of complex models (e.g., neural networks) would sacrifice transparency for potential gains in accuracy.
 
 ## 6. Conclusion
 
