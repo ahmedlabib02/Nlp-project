@@ -13,4 +13,4 @@
   - Reports: [milestone3/reports/](milestone3/reports)
 
 Data sources:
-- Channel data: [al_mokhbir_al_eqtisadi/](al_mokhbir_al_eqtisadi), [B Hodoo2/](B%20Hodoo2), [Kefaya Ba2a/](Kefaya%20Ba2a)
+- Channel data: [milestone1/al_mokhbir_al_eqtisadi/](al_mokhbir_al_eqtisadi), [milestone1/B Hodoo2/](B%20Hodoo2), [milestone1/Kefaya Ba2a/](Kefaya%20Ba2a)
