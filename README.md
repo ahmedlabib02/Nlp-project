@@ -14,4 +14,3 @@
 
 Data sources:
 - Channel data: [al_mokhbir_al_eqtisadi/](al_mokhbir_al_eqtisadi), [B Hodoo2/](B%20Hodoo2), [Kefaya Ba2a/](Kefaya%20Ba2a)
-- Zips: [al_mokhbir_al_eqtisadi.zip](al_mokhbir_al_eqtisadi.zip), [B_hodoo2.zip](B_hodoo2.zip), [kefaya_ba2a.zip](kefaya_ba2a.zip)

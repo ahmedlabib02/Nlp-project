@@ -35,7 +35,7 @@ These initial checks are crucial to avoid biases and errors in the later stages 
 #### Category Distribution
 Visualizing the distribution of transcripts across different categories revealed potential class imbalances. This insight is important, as imbalanced classes can affect model performance.
 
-![Bar Chart](cat.png)
+![Bar Chart](images/cat.png)
 
 #### Transcript Distribution Across Channels
 We also examined how transcripts are distributed by channel:
@@ -62,7 +62,7 @@ This structure provides a strong metadata signal since channels with consistent 
 We computed the raw length of each transcript (in characters), which ranged from **930 to 51,920** characters, with a mean length of approximately **21,778** characters. This considerable variability suggests that normalization or segmentation may be necessary, particularly for very long texts.
 
 A bar chart illustrating the distribution of transcript lengths helps visualize this variability:
-![Bar Chart](raw.png)
+![Bar Chart](images/raw.png)
 
 #### Raw Text Sampling
 Random sampling of transcripts was performed to inspect for encoding issues, extraneous whitespace, and formatting inconsistencies. This step confirmed that the raw data was largely clean, though it informed adjustments in our cleaning pipeline.
